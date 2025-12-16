@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>facture and invoice genarateur by elamari</title>
+  <style>
+    :root {
+      --blue: #005aa3;
+      --blue-dark: #003d73;
+      --yellow: #ffd400;
+      --border: #d9dde3;
+      --text: #1f2530;
+      --muted: #5b6472;
+      --bg: #eef1f7;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    h1, h2, h3, h4 {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    a { color: var(--blue); }
+    .page {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      gap: 18px;
+      padding: 20px 32px;
+      min-height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
+
+    }
+    .panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 15px 60px rgba(10, 43, 87, 0.12);
+    }
+    .panel h2 {
+      font-size: 16px;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 10px;
+      letter-spacing: 0.6px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    fieldset {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    legend {
+      padding: 0 6px;
+      font-weight: 600;
+      color: var(--blue-dark);
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      background: #fff;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(0, 104, 179, 0.15);
+    }
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .items-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--blue);
+      background: #fff;
+      color: var(--blue);
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn.primary {
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn:hover { box-shadow: 0 10px 25px rgba(0, 104, 179, 0.2); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .table-mini {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 12px;
+      margin-top: 8px;
+      display: block;
+    }
+    .table-mini thead,
+    .table-mini tbody { display: block; width: 100%; }
+    .table-mini thead tr,
+    .table-mini tbody tr {
+      display: grid;
+      grid-template-columns: 1.1fr 2fr 2fr 2fr 0.25fr;
+      align-items: center;
+      column-gap: 12px;
+      width: 100%;
+    }
+    .table-mini thead th {
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 0 8px 4px;
+    }
+    .table-mini tbody tr {
+      background: #f8fbff;
+      border: 1px solid #dce6f5;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(10, 43, 87, 0.06);
+      padding: 12px 14px;
+    }
+    .table-mini td { padding: 0; }
+    .table-mini td input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    .table-mini td input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 2px rgba(0, 104, 179, 0.15);
+      outline: none;
+    }
+    .table-mini td:last-child { justify-self: center; }
+    .table-mini .remove { font-size: 16px; }
+    @media (max-width: 720px) {
+      .table-mini thead { display: none; }
+      .table-mini tbody tr {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: repeat(3, auto);
+        row-gap: 10px;
+      }
+      .table-mini tbody tr td:nth-child(1) { grid-column: 1 / span 2; }
+      .table-mini tbody tr td:nth-child(2) { grid-column: 1 / span 2; }
+      .table-mini tbody tr td:nth-child(3) { grid-column: 1; }
+      .table-mini tbody tr td:nth-child(4) { grid-column: 2; }
+      .table-mini tbody tr td:nth-child(5) { grid-column: 1 / span 2; justify-self: flex-end; }
+    }
+    .remove {
+      color: #c0392b;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    /* Invoice preview */
+    .invoice-wrap { padding: 10px 18px; }
+    .invoice {
+      background: #fff;
+      border: 1px solid #d7dce2;
+      box-shadow: 0 12px 40px rgba(10, 43, 87, 0.15);
+      border-radius: 8px;
+      padding: 26px 32px 40px;
+      max-width: 950px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 1000px;
+    }
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 20px;
+      padding-bottom: 14px;
+    }
+    .info-lines { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+    .info-line { display: flex; gap: 8px; font-size: 12.5px; color: var(--text); }
+    .info-line .label { width: 170px; font-weight: 700; color: var(--blue-dark); }
+    .billing-block {
+      margin-top: 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .billing-block h3 {
+      font-size: 12px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin: 0 0 4px;
+      letter-spacing: 0.2px;
+    }
+    .billing-block p { margin: 0; line-height: 1.5; font-size: 13px; text-align: center; }
+    .facture-title {
+      color: var(--blue);
+      text-transform: uppercase;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .header .info-line {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .logo-block {
+      text-align: right;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .logo-block img { height: 44px; }
+    .info-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .info-grid .label { font-weight: 600; }
+    .addresses {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 18px 0 10px;
+      justify-items: center;
+    }
+    .addresses h3 {
+      font-size: 12px;
+      color: var(--blue);
+      text-transform: uppercase;
+      margin: 0 0 6px;
+      letter-spacing: 0.2px;
+      text-align: center;
+    }
+    .addresses p { margin: 0; line-height: 1.5; font-size: 13px; text-align: center; }
+    .links {
+      margin: 8px 0 12px;
+      font-weight: 700;
+      color: var(--blue);
+      font-size: 13px;
+      font-style: italic;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .print-btn {
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 90, 163, 0.2);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .print-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(0, 90, 163, 0.22); }
+    .print-btn:active { transform: translateY(0); box-shadow: 0 6px 16px rgba(0, 90, 163, 0.2); }
+    .doc-tabs {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-right: 10px;
+      background: #fff;
+    }
+    .doc-tab {
+      padding: 10px 14px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-weight: 700;
+      color: var(--muted);
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .doc-tab.active {
+      background: var(--blue);
+      color: #fff;
+    }
+    @page { size: A4; margin: 15mm; }
+    @media print {
+      body { background: #fff; margin: 0; }
+      .panel, .print-bar { display: none !important; }
+      .page { grid-template-columns: 1fr; padding: 0; margin: 0; }
+      .invoice {
+        box-shadow: none;
+        border: none;
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+        min-height: calc(297mm - 30mm);
+        max-height: calc(297mm - 30mm);
+        page-break-inside: avoid;
+      }
+      .invoice > * { padding: 0; margin: 0; }
+      .totals, .invoice-table { width: 100%; margin: 0; }
+      .legal {
+        margin-top: auto;
+        padding-bottom: 6mm;
+        padding-top: 4mm;
+      }
+    }
+    table.invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+      margin-top: 8px;
+    }
+    table.invoice-table thead th {
+      background: #f1f3f7;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      padding: 10px 8px;
+      border-bottom: 1px solid #d5d9df;
+    }
+    table.invoice-table th:nth-child(2),
+    table.invoice-table td:nth-child(2) { text-align: center; }
+    table.invoice-table th:nth-child(3),
+    table.invoice-table th:nth-child(4),
+    table.invoice-table th:nth-child(5),
+    table.invoice-table th:nth-child(6),
+    table.invoice-table td:nth-child(3),
+    table.invoice-table td:nth-child(4),
+    table.invoice-table td:nth-child(5),
+    table.invoice-table td:nth-child(6) { text-align: right; }
+    table.invoice-table th:nth-child(4),
+    table.invoice-table td:nth-child(4) { white-space: nowrap; }
+    table.invoice-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e6e9ef;
+      color: var(--text);
+      word-break: break-word;
+    }
+    table.invoice-table td:last-child { font-weight: 700; }
+    .totals {
+      width: 100%;
+      font-size: 13px;
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      page-break-inside: avoid;
+      gap: 4px;
+    }
+    .totals .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .totals .row span:first-child { font-weight: 700; }
+    .totals .grand {
+      background: var(--yellow);
+      padding: 12px 16px;
+      font-weight: 800;
+      border: 1px solid #e0bd00;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-sizing: border-box;
+      color: #000;
+    }
+    .footer-note {
+      display: none;
+    }
+    .legal {
+      margin-top: auto;
+      padding-top: 24px;
+      font-size: 10.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      text-align: center;
+    }
+    @media (max-width: 1100px) {
+      .page { grid-template-columns: 1fr; }
+      .addresses { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+      .info-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="panel">
+      <div class="items-head">
+        <h2>Parametrer</h2>
+        <button class="btn primary" type="button" id="fillSample">Remplir l'exemple</button>
+      </div>
+      <form id="invoiceForm">
+        <fieldset>
+          <legend>En-tete</legend>
+          <div>
+            <label for="factureNumber">Numero de facture</label>
+            <input id="factureNumber" name="factureNumber" value="MA56FBLB69MG" />
+          </div>
+          <div>
+            <label for="invoiceDate">Date de la facture</label>
+            <input id="invoiceDate" name="invoiceDate" type="date" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Societe</legend>
+          <label for="companyName">Nom</label>
+          <input id="companyName" name="companyName" value="DECATHLON MAROC SAS" />
+          <label for="companyAddr">Adresse</label>
+          <textarea id="companyAddr" name="companyAddr" rows="3">QUARTIER BEAUSITE
+AN SIBAA
+CASABLANCA</textarea>
+          <label for="companyId">Autre identifiant</label>
+          <input id="companyId" name="companyId" value="CNSS 7308111" />
+        </fieldset>
+
+        <fieldset>
+          <legend>Coordonnees</legend>
+          <div class="split">
+            <div>
+              <label for="billingName">Nom facturation</label>
+              <input id="billingName" name="billingName" value="Mohamed ELAMARI" />
+            </div>
+          </div>
+          <div class="split">
+            <div>
+              <label for="billingAddr">Adresse de facturation</label>
+              <textarea id="billingAddr" name="billingAddr" rows="3">Casablanca
+20053 Casablanca
+
+Maroc</textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Lignes</legend>
+          <div class="items-head">
+          
+            <button class="btn" type="button" id="addItem">+ Ajouter</button>
+          </div>
+          <table class="table-mini" id="itemsTable">
+            <thead>
+              <tr>
+                <th style="width: 22%;">Reference</th>
+                <th style="width: 38%;">Libelle</th>
+                <th style="width: 12%;">Qt</th>
+                <th style="width: 20%;">Prix Unitaire</th>
+                <th style="width: 8%;"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </fieldset>
+      </form>
+    </div>
+
+    <div class="invoice-wrap">
+      <div class="print-bar">
+        <div class="doc-tabs">
+          <button class="doc-tab active" data-doc="FACTURE">Facture</button>
+          <button class="doc-tab" data-doc="DEVIS">Devis</button>
+        </div>
+        <button class="print-btn" id="printBtn">Imprimer en PDF</button>
+      </div>
+      <div class="invoice" id="invoice">
+        <div class="header">
+          <div>
+            <div class="facture-title" id="docTitle">FACTURE</div>
+            <div class="info-lines">
+              <div class="info-line"><span class="label" id="dateLabel">Date de la facture</span><span id="pInvoiceDate"></span></div>
+              <div class="info-line"><span class="label" id="numberLabel">Numero de facture</span><span id="pFactureNumber"></span></div>
+            </div>
+          </div>
+          <div class="logo-block">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/Decathlon_-_logo_%28France%2C_2024%29.svg" alt="Decathlon logo">
+            <div id="pCompanyName"></div>
+            <div id="pCompanyAddr"></div>
+            <div id="pCompanyId"></div>
+          </div>
+        </div>
+
+        <div class="billing-block">
+          <h3>Adresse de facturation</h3>
+          <p id="pBilling"></p>
+        </div>
+
+        <div class="links">Tous nos produits sur www.decathlon.ma !</div>
+
+        <table class="invoice-table" id="previewItems">
+          <thead>
+            <tr>
+              <th>Numero de l'article — Reference</th>
+              <th>Quantite</th>
+              <th>Prix Unitaire HT</th>
+              <th>TVA</th>
+              <th>Montant TVA</th>
+              <th>Total TTC</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div class="totals" id="totals"></div>
+        <div class="footer-note" id="footerNote"></div>
+        <div class="legal">
+          Decathlon Maroc SAS Quartier Beausite, 20250, AN SIBAA - CASABLANCA (Maroc)<br>
+          SAS au capital de 30.000 dirhams - Patente 37598882 RC Casa 151620<br>
+          I.F: 4017044 - CNSS 7308111 - ICE 000079980000051
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("invoiceForm");
+    const itemsBody = document.querySelector("#itemsTable tbody");
+    const previewBody = document.querySelector("#previewItems tbody");
+    const totalsEl = document.getElementById("totals");
+    const footerNote = document.getElementById("footerNote");
+    const sampleButton = document.getElementById("fillSample");
+    const invoiceDateInput = document.getElementById("invoiceDate");
+    const docTabs = document.querySelectorAll(".doc-tab");
+
+    const state = {
+      docType: "FACTURE",
+      factureNumber: "MA56FBLB69MG",
+      invoiceDate: "2025-12-15",
+      companyName: "DECATHLON MAROC SAS",
+      companyAddr: "QUARTIER BEAUSITE\nAN SIBAA\nCASABLANCA",
+      companyId: "AN SIBAA",
+      billingName: "Mohamed ELAMARI",
+      billingAddr: "Casablanca\n20053 Casablanca\n\nMaroc",
+      items: [
+        { ref: "4905690", label: "Doudoune gdt sans manches homme - mve600 noir", qty: 1, price: 149.17, tva: 20 },
+        { ref: "2102120", label: "Shipping costs", qty: 1, price: 0, tva: 20 },
+      ],
+    };
+
+    function toMoney(value) {
+      return value.toLocaleString("fr-MA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " MAD";
+    }
+
+    function setText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function setHTML(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = value;
+    }
+
+    function updatePreview() {
+      setText("docTitle", state.docType);
+      setText("dateLabel", state.docType === "DEVIS" ? "Date du devis" : "Date de la facture");
+      setText("numberLabel", state.docType === "DEVIS" ? "Numero de devis" : "Numero de facture");
+      setText("pFactureNumber", state.factureNumber);
+      setText("pInvoiceDate", formatDate(state.invoiceDate));
+
+      setText("pCompanyName", state.companyName);
+      setHTML("pCompanyAddr", state.companyAddr.replace(/\n/g, "<br>"));
+      setText("pCompanyId", state.companyId);
+
+      setHTML("pBilling", `<strong>${state.billingName}</strong><br>${state.billingAddr.replace(/\n/g, "<br>")}`);
+
+      renderItems();
+      renderTotals();
+    }
+
+    function renderItems() {
+      previewBody.innerHTML = "";
+      state.items.forEach(item => {
+        const totalHT = item.qty * item.price;
+        const vatAmount = totalHT * (item.tva / 100);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><div><strong>${item.ref}</strong><br>${item.label}</div></td>
+          <td>${item.qty}</td>
+          <td>${toMoney(item.price)}</td>
+          <td>${item.tva} %</td>
+          <td>${toMoney(vatAmount)}</td>
+          <td>${toMoney(totalHT + vatAmount)}</td>
+        `;
+        previewBody.appendChild(row);
+      });
+    }
+
+    function renderTotals() {
+      const totals = state.items.reduce((acc, item) => {
+        const totalHT = item.qty * item.price;
+        const vatAmount = totalHT * (item.tva / 100);
+        acc.ht += totalHT;
+        acc.vat += vatAmount;
+        return acc;
+      }, { ht: 0, vat: 0 });
+      const totalTtc = totals.ht + totals.vat;
+      const vatRates = Array.from(new Set(state.items.map(i => i.tva)));
+      const vatLabel = vatRates.length === 1 ? `Montant TVA ${vatRates[0]} %` : "Montant TVA";
+
+      totalsEl.innerHTML = `
+        <div class="row"><span>Total HT</span><strong>${toMoney(totals.ht)}</strong></div>
+        <div class="row"><span>${vatLabel}</span><strong>${toMoney(totals.vat)}</strong></div>
+        <div class="grand"><span>Total TTC</span><span>${toMoney(totalTtc)}</span></div>
+      `;
+      footerNote.textContent = totalTtc
+        ? `Arrete la presente facture a la somme de ${toMoney(totalTtc)}`
+        : "";
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "";
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return iso;
+      const dd = String(date.getDate()).padStart(2, "0");
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const yy = String(date.getFullYear()).slice(-2);
+      return `${dd}.${mm}.${yy}`;
+    }
+
+    function bindInputs() {
+      const fields = [
+        "factureNumber","invoiceDate",
+        "companyName","companyAddr","companyId",
+        "billingName","billingAddr"
+      ];
+      fields.forEach(name => {
+        const el = document.getElementById(name);
+        el.value = state[name];
+        el.addEventListener("input", () => {
+          state[name] = el.value;
+          updatePreview();
+        });
+      });
+    }
+
+    function addItemRow(item, index) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input value="${item.ref}" data-field="ref" data-index="${index}" /></td>
+        <td><input value="${item.label}" data-field="label" data-index="${index}" /></td>
+        <td><input type="number" min="0" step="1" value="${item.qty}" data-field="qty" data-index="${index}" /></td>
+        <td><input type="number" min="0" step="0.01" value="${item.price}" data-field="price" data-index="${index}" /></td>
+        <td><span class="remove" data-remove="${index}">✕</span></td>
+      `;
+      itemsBody.appendChild(tr);
+    }
+
+    function renderItemForm() {
+      itemsBody.innerHTML = "";
+      state.items.forEach((item, index) => addItemRow(item, index));
+    }
+
+    itemsBody.addEventListener("input", (e) => {
+      const target = e.target;
+      const idx = Number(target.dataset.index);
+      const field = target.dataset.field;
+      if (Number.isNaN(idx) || !field) return;
+      let value = target.value;
+      if (["qty","price","tva"].includes(field)) value = Number(value);
+      state.items[idx] = { ...state.items[idx], [field]: value };
+      updatePreview();
+    });
+
+    itemsBody.addEventListener("click", (e) => {
+      const remove = e.target.dataset.remove;
+      if (remove !== undefined) {
+        state.items.splice(Number(remove), 1);
+        renderItemForm();
+        updatePreview();
+      }
+    });
+
+    document.getElementById("addItem").addEventListener("click", () => {
+      state.items.push({ ref: "REF", label: "Libelle", qty: 1, price: 0, tva: 20 });
+      renderItemForm();
+      updatePreview();
+    });
+
+    sampleButton.addEventListener("click", () => {
+      Object.assign(state, {
+        docType: "FACTURE",
+        factureNumber: "MA56FBLB69MG",
+        invoiceDate: "2025-12-15",
+        companyName: "DECATHLON MAROC SAS",
+        companyAddr: "QUARTIER BEAUSITE\nAN SIBAA\nCASABLANCA",
+        companyId: "AN SIBAA",
+        billingName: "Mohamed ELAMARI",
+        billingAddr: "Casablanca\n20053 Casablanca\n\nMaroc",
+        items: [
+          { ref: "4905690", label: "Doudoune gdt sans manches homme - mve600 noir", qty: 1, price: 149.17, tva: 20 },
+          { ref: "2102120", label: "Shipping costs", qty: 1, price: 0, tva: 20 },
+        ],
+      });
+      bindInputs();
+      renderItemForm();
+      updatePreview();
+    });
+
+    document.getElementById("printBtn").addEventListener("click", () => {
+      window.print();
+    });
+
+    docTabs.forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.docType = btn.dataset.doc;
+        docTabs.forEach(b => b.classList.toggle("active", b === btn));
+        updatePreview();
+      });
+    });
+
+    // init
+    bindInputs();
+    renderItemForm();
+    if (!invoiceDateInput.value) invoiceDateInput.value = state.invoiceDate;
+    updatePreview();
+  </script>
+</body>
+</html>
