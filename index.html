@@ -19,7 +19,7 @@
     }
     body {
       margin: 0;
-      font-family: Arial, "Segoe UI", sans-serif;
+      font-family: Arial, Helvetica, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
@@ -356,6 +356,7 @@
       padding: 10px 8px;
       border-bottom: 1px solid #d5d9df;
     }
+    table.invoice-table thead th:last-child { font-weight: 800; }
     table.invoice-table th:nth-child(2),
     table.invoice-table td:nth-child(2) { text-align: center; }
     table.invoice-table th:nth-child(3),
@@ -527,8 +528,8 @@ CASABLANCA</textarea>
         <table class="invoice-table" id="previewItems">
           <thead>
             <tr>
-              <th>Numero de l'article — Reference</th>
-              <th>Quantite</th>
+              <th>Numéro de l'article — Référence</th>
+              <th>Quantité</th>
               <th>Prix Unitaire HT</th>
               <th>TVA</th>
               <th>Montant TVA</th>
@@ -607,16 +608,15 @@ CASABLANCA</textarea>
     function renderItems() {
       previewBody.innerHTML = "";
       state.items.forEach(item => {
-        const totalHT = item.qty * item.price;
-        const vatAmount = totalHT * (item.tva / 100);
+        const { vatAmount, totalTtc, unitHt } = computeAmounts(item);
         const row = document.createElement("tr");
         row.innerHTML = `
           <td><div><strong>${item.ref}</strong><br>${item.label}</div></td>
           <td>${item.qty}</td>
-          <td>${toMoney(item.price)}</td>
+          <td>${toMoney(unitHt)}</td>
           <td>${item.tva} %</td>
           <td>${toMoney(vatAmount)}</td>
-          <td>${toMoney(totalHT + vatAmount)}</td>
+          <td>${toMoney(totalTtc)}</td>
         `;
         previewBody.appendChild(row);
       });
@@ -624,23 +624,22 @@ CASABLANCA</textarea>
 
     function renderTotals() {
       const totals = state.items.reduce((acc, item) => {
-        const totalHT = item.qty * item.price;
-        const vatAmount = totalHT * (item.tva / 100);
-        acc.ht += totalHT;
+        const { totalHt, vatAmount, totalTtc } = computeAmounts(item);
+        acc.ht += totalHt;
         acc.vat += vatAmount;
+        acc.ttc += totalTtc;
         return acc;
-      }, { ht: 0, vat: 0 });
-      const totalTtc = totals.ht + totals.vat;
+      }, { ht: 0, vat: 0, ttc: 0 });
       const vatRates = Array.from(new Set(state.items.map(i => i.tva)));
       const vatLabel = vatRates.length === 1 ? `Montant TVA ${vatRates[0]} %` : "Montant TVA";
 
       totalsEl.innerHTML = `
         <div class="row"><span>Total HT</span><strong>${toMoney(totals.ht)}</strong></div>
         <div class="row"><span>${vatLabel}</span><strong>${toMoney(totals.vat)}</strong></div>
-        <div class="grand"><span>Total TTC</span><span>${toMoney(totalTtc)}</span></div>
+        <div class="grand"><span>Total TTC</span><span>${toMoney(totals.ttc)}</span></div>
       `;
-      footerNote.textContent = totalTtc
-        ? `Arrete la presente facture a la somme de ${toMoney(totalTtc)}`
+      footerNote.textContent = totals.ttc
+        ? `Arrete la presente facture a la somme de ${toMoney(totals.ttc)}`
         : "";
     }
 
@@ -652,6 +651,18 @@ CASABLANCA</textarea>
       const mm = String(date.getMonth() + 1).padStart(2, "0");
       const yy = String(date.getFullYear()).slice(-2);
       return `${dd}.${mm}.${yy}`;
+    }
+
+    // Traite le prix saisi comme TTC et derive HT/TVA en consequence
+    function computeAmounts(item) {
+      const qty = Number(item.qty) || 0;
+      const priceTtc = Number(item.price) || 0;
+      const tvaRate = Number(item.tva) || 0;
+      const totalTtc = qty * priceTtc;
+      const unitHt = tvaRate ? priceTtc / (1 + tvaRate / 100) : priceTtc;
+      const totalHt = unitHt * qty;
+      const vatAmount = totalTtc - totalHt;
+      return { totalHt, vatAmount, totalTtc, unitHt };
     }
 
     function bindInputs() {
